@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/**'
+      - 'starter/frontend/**'
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
@@ -23,11 +23,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./frontend
+        working-directory: ./starter/frontend
 
       - name: Run ESLint
         run: npm run lint
-        working-directory: ./frontend
+        working-directory: ./starter/frontend
 
   test:
     name: Run Tests
@@ -43,11 +43,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./frontend
+        working-directory: ./starter/frontend
 
       - name: Run tests
         run: npm test
-        working-directory: ./frontend
+        working-directory: ./starter/frontend
 
   build:
     name: Build Docker Image
@@ -59,4 +59,4 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t frontend-app:latest ./frontend
+          docker build -t frontend-app:latest ./starter/frontend
