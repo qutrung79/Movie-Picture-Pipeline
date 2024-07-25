@@ -1,0 +1,49 @@
+name: Backend Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'starter/backend/**'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  lint:
+    uses: ./.github/workflows/backend-ci.yml # Reuse CI workflow for lint job
+    
+  test:
+    uses: ./.github/workflows/backend-ci.yml # Reuse CI workflow for test job
+
+  build-and-push:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Build and Tag Docker Image
+        working-directory: ./starter/backend
+        run: docker build -t your-image-repo:${{ github.sha }} .
+      - name: Push Docker Image
+        run: docker push your-image-repo:${{ github.sha }}
+    env:
+      # Add your registry credentials here, e.g.:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} 
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}      
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Set Image Tag in Deployment Manifest
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval -i '.spec.template.spec.containers[0].image = strenv(IMAGE_URL)' deployment.yaml 
+        env:
+          IMAGE_URL: your-image-repo:${{ github.sha }}
+      - name: Apply Deployment
+        run: kubectl apply -f deployment.yaml
+      - name: Rollout Restart
+        run: kubectl rollout restart deployment your-deployment-name # Replace with your deployment name

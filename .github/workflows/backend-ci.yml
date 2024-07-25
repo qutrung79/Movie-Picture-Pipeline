@@ -1,0 +1,44 @@
+name: Backend Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'starter/backend/**'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Install Dependencies
+        working-directory: ./starter/backend
+        run: npm install  # Or yarn install, depending on your project
+      - name: Run Linter
+        working-directory: ./starter/backend
+        run: npm run lint # Replace with your actual lint script command
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Install Dependencies
+        working-directory: ./starter/backend
+        run: npm install  # Or yarn install
+      - name: Run Tests
+        working-directory: ./starter/backend
+        run: npm test   # Replace with your actual test script command
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Build Docker Image
+        working-directory: ./starter/backend
+        run: docker build -t your-image-name:latest . # Customize image name

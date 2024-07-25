@@ -1,0 +1,90 @@
+name: Frontend CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'starter/frontend/**'
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # Ensure this matches your .nvmrc
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./starter/frontend
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./starter/frontend
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t frontend-app:${{ github.sha }} ./starter/frontend
+          echo ${{ github.sha }} > image-tag.txt
+        id: build
+
+  push-to-ecr:
+    name: Push to ECR
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Login to AWS ECR
+        run: |
+          aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.<your-region>.amazonaws.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Push Docker image to ECR
+        run: |
+          IMAGE_TAG=$(cat image-tag.txt)
+          docker tag frontend-app:$IMAGE_TAG <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
+          docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: push-to-ecr
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name <your-cluster-name> --region <your-region>
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          IMAGE_TAG=$(cat image-tag.txt)
+          kubectl set image deployment/frontend frontend=<your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
