@@ -53,7 +53,7 @@ jobs:
 
       - name: Login to AWS ECR
         run: |
-          aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.<your-region>.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <3978-3497-8306>.dkr.ecr.us-east-1.amazonaws.com
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -61,8 +61,8 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           IMAGE_TAG=$(cat image-tag.txt)
-          docker tag frontend-app:$IMAGE_TAG <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
-          docker push <your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
+          docker tag frontend-app:$IMAGE_TAG <3978-3497-8306>.dkr.ecr.us-east-1.amazonaws.com/frontend-app:$IMAGE_TAG
+          docker push <3978-3497-8306>.dkr.ecr.us-east-1.amazonaws.com/frontend-app:$IMAGE_TAG
 
   deploy:
     name: Deploy to Kubernetes
@@ -79,7 +79,7 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          aws eks update-kubeconfig --name <your-cluster-name> --region <your-region>
+          aws eks update-kubeconfig --name cluster --region us-east-1
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -87,4 +87,4 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           IMAGE_TAG=$(cat image-tag.txt)
-          kubectl set image deployment/frontend frontend=<your-account-id>.dkr.ecr.<your-region>.amazonaws.com/frontend-app:$IMAGE_TAG
+          kubectl set image deployment/frontend frontend=<3978-3497-8306>.dkr.ecr.us-east-1.amazonaws.com/frontend-app:$IMAGE_TAG
