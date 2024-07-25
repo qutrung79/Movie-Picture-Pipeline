@@ -13,7 +13,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Adjust as needed
+          node-version: '18.14'  # Adjust as needed
 
       - name: Install Dependencies
         run: npm ci
@@ -30,7 +30,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Adjust as needed
+          node-version: '18.14'  # Adjust as needed
 
       - name: Install Dependencies
         run: npm ci

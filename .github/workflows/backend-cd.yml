@@ -23,13 +23,12 @@ jobs:
         uses: actions/checkout@v3
       - name: Build and Tag Docker Image
         working-directory: ./starter/backend
-        run: docker build -t your-image-repo:${{ github.sha }} .
+        run: docker build -t 397834978306.dkr.ecr.us-east-1.amazonaws.com/backend:${{ github.sha }} .
       - name: Push Docker Image
-        run: docker push your-image-repo:${{ github.sha }}
+        run: docker push 397834978306.dkr.ecr.us-east-1.amazonaws.com/backend:${{ github.sha }}
     env:
-      # Add your registry credentials here, e.g.:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} 
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}      
+      DOCKER_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+      DOCKER_PASSWORD: ${{ secrets.AWS_SECRET_ACCESS_KEY }}      
 
   deploy:
     needs: build-and-push
@@ -42,8 +41,8 @@ jobs:
         with:
           cmd: yq eval -i '.spec.template.spec.containers[0].image = strenv(IMAGE_URL)' deployment.yaml 
         env:
-          IMAGE_URL: your-image-repo:${{ github.sha }}
+          IMAGE_URL:397834978306.dkr.ecr.us-east-1.amazonaws.com/backend:${{ github.sha }}
       - name: Apply Deployment
         run: kubectl apply -f deployment.yaml
       - name: Rollout Restart
-        run: kubectl rollout restart deployment your-deployment-name # Replace with your deployment name
+        run: kubectl rollout restart deployment aws-auth # Replace with your deployment name
